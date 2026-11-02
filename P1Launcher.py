@@ -151,6 +151,7 @@ if useFuzzySystem:
     experto = FuzzySystem()
 else:
     experto = ExpertSystem()
+
 experto.setObjetivo(objectiveSet[numPath])
 
 miRobot.setPose((1,10,-10))

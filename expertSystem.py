@@ -18,50 +18,81 @@ class ExpertSystem:
     def __init__(self) -> None:
         self.objetivoActual = None
         self.nombreAlumno = "Jorge Sánchez Cerezo" #IMPORTANTE: Cambia el valor de esta propiedad por tu nombre completo
+        
+        
+        
+        #True: el robot va hacia el primer punto del tramo (el inicio de la racta o el punto medio del triángulo)
+        # False: el robot ya va hacia el punto final
         self.estado_inicio = True
-        self.primer_objetivo_global = True # Bandera para controlar la alineación del primer segmento
 
-    #   función setObjetivo
-    #   Almacena en la propiedad objetivoActual el objetivo al que tiene que moverse el robot
+
+        # True solo al principio de todo. Sirve para controlar el arranque del primer objetivo (pq hay angulos que no pilla, entonces vamos con cuidadito para evitar problemas)
+        # Cuando se alinea pasa a False y ya no se vuelve a usar
+        self.primer_objetivo_global = True 
+
+    #Guarda en objetivoActual el objetivo al que tiene que moverse el robot.
+    #También pone estado_inicio a True, así en cada objetivo nuevo el robot va primero
     def setObjetivo(self, objetivo):
         self.objetivoActual = objetivo
         self.estado_inicio = True
 
+    #   Recibe la diferencia en X y en Y entre el robot y un punto, y devuelve el ángulo
+    #   Paso el anguo a grados
     def funcionangulo(self, difx, dify):
-        #Con trigonometria básica, calculamos el angulo (tan = dify/dix): angulo = arctan dify difx
-        angulo = math.atan2(dify, difx) #Como esta en radianes, vamos a pasarlo a grados
+
+
+        # Uso trigonometría basica: tan(angulo) = dify / difx, o sea: angulo = arctan(dify / difx).
+        # Tengo que usar atan2 porque tiene en cuenta los signos de dify y difx y funciona hacia cualquier lado
+        angulo = math.atan2(dify, difx) # Sale en radianes
+        # Lo pasamos a grados porque la orientación del robot también está en grados
         angulo_objetivo = angulo * 180/math.pi
         return angulo_objetivo
 
+    #   Saca de la pose del robot su posición (x, y) y su orientación en grados.
+    #   La pose trae 5 valores, pero solo necesitamos los 3 primeros.
+    #   Ojo: esta función no tiene que ver con estado_inicio, solo lee la pose
     def inicio(self, poseRobot):
-        #Asignamos variables a los datos del robot (coordenadas y angulo que mira)
         xrobot = poseRobot[0]
         yrobot = poseRobot[1]
         orientacion = poseRobot[2]
         return xrobot, yrobot, orientacion
 
+    #   Devuelve el tipo del objetivo actual: 1 si es un segmento y 2 si es un triángulo
     def tipo_recorrido(self):
         tipo = self.objetivoActual.getType()
         return tipo
 
+    #   Calcula cuánto tiene que girar el robot para mirar al punto (ángulo del objetivo menos orientación)
+    #   y deja el resultado siempre entre -180 y 180, para que gire por el lado más corto.
+    #   Si es positivo el punto está a la izquierda del robot y si es negativo, a la derecha
     def calculo_diferencia(self, angulo_objetivo, orientacion):
         diferencia  = angulo_objetivo - orientacion
         while diferencia > 180:
-            diferencia -= 360 # si ha dado mas de media vuelta en sentido horario, es decir, mas alla de los 180 grados, lo ponemos en -180, y asi lo situamos como que esta en la parte izquierda del robot (zona negativa | zona positiva) 
+            diferencia -= 360 # Si se pasa de 180 le restamos 360 (por ejemplo, 340 pasa a ser -20)
         while diferencia < -180:
-            diferencia += 360
+            diferencia += 360 # Si es menor de -180 le sumamos 360
         return diferencia
 
+    #   Recibe la posición de un punto y la del robot, y devuelve: la diferencia en X, la diferencia en Y,
+    #   la distancia al punto y el ángulo en el que está.
+    #   Ojo: la distancia es |difx| + |dify|, que no es la real (la real sería con hypot), pero es más
+    #   sencilla y solo la usamos para saber cuándo cambiar de punto y cuándo bajar la velocidad.
+    #   Vale para cualquier punto (inicio, punto medio o final)
     def distancia(self, xiniobj, xrobot, yiniobj, yrobot):
         difx = xiniobj - xrobot
         dify = yiniobj - yrobot 
         distancia_objetivo = abs(difx)+abs(dify)
-        angulo_objetivo = self.funcionangulo(difx, dify) # Llamada a funcionangulo para promover el uso de funciones
+        angulo_objetivo = self.funcionangulo(difx, dify) # Sacamos el ángulo con la función de arriba
         return difx, dify, distancia_objetivo, angulo_objetivo
 
 
+    #   Es el bloque principal del sistema experto. Recibe la distancia al punto de destino y el error de ángulo
+    #   (diferencia), y devuelve x = velocidad lineal e y = velocidad angular.
+    #   Tiene 3 partes: 1) giro y velocidad según el error de ángulo, 2) arranque del primer objetivo
+    #   y 3) cambio de destino cuando estamos cerca del primer punto del tramo
     def iraobjetivo(self, distancia_objetivo, diferencia):
         # Giro a la DERECHA (diferencia positiva)
+
         if diferencia > 0.3:
             if diferencia > 15:
                 x = 2
@@ -72,6 +103,7 @@ class ExpertSystem:
             else:
                 x = 3
                 y = 0.1
+
         # Giro a la izquierda (diferencia negativa)
         elif diferencia < -0.3:
             if diferencia < -15:
@@ -88,71 +120,58 @@ class ExpertSystem:
             x = 3
             y = 0
 
-        # CONTROL DE VELOCIDAD EN DOS FASES PARA EL ARRANQUE INICIAL
+        # Para el primer punto, 
         if self.primer_objetivo_global:
             if distancia_objetivo <= 3.5:
                 self.estado_inicio = False # Asignación explícita para evitar oscilaciones
 
             if self.estado_inicio:
-                # FASE 1: Aproximación a P_inicio a velocidad moderada (1.0 m/s)
+                # Antes de llegar al punto, le bajo la velocidad, y asievito problemas con inercia
                 if distancia_objetivo <= 5:
-                    x = 1.5
+                    x = 1
             else:
-                # FASE 2: Mantener 1.0 m/s tras cruzar P_inicio hasta alinearse con la recta (< 5 grados)
+                # Hasta que no este alineado le limito la vel
                 if abs(diferencia) > 10:
                     x = 1.0
                 else:
-                    self.primer_objetivo_global = False # Alineación completada, liberar alta velocidad
+                    self.primer_objetivo_global = False 
 
-        # 2. Comprobación de estado según la distancia al objetivo inicial
+        #Compruebo estado según la distancia al objetivo inicial
         if distancia_objetivo <= 2 and self.estado_inicio:
-            self.estado_inicio = False # Asignación explícita para evitar oscilaciones
-            x = 0
+            self.estado_inicio = False
+            x = 0.2
 
         return x, y
-
-    #   función tomarDecision. 
-    #   Recibe una tupla de 3 valores con la pose del robot: posición X, posición Y, orientación
-    #   Devuelve una tupla con la velocidad lineal y angular que se quiere dar al robot
+    
+    #Es la funcion que se repite constantemente, necesita los valores de x e y
     def tomarDecision(self, poseRobot):
-        x , y = 0 , 0 #Inicializamos las variables a cero por si acaso
 
+        x , y = 0 , 0 # Empezamos con velocidad 0 por si acaso
+
+        #Si todavía no hay objetivo, el robot se queda parado
         if self.objetivoActual is None:
             return x, y
 
-        #Llamamos a inicio, en el que obtenemos los datos del robot
+        #Saco la posición y la orientación del robot
         xrobot, yrobot, orientacion = self.inicio(poseRobot)
 
-        #Calculamos el tipo de recorrido (1 segmento, 2 triangulo)
+        #Miramos si el tramo es un segmento (1) o un triángulo (2)
         tipo = self.tipo_recorrido()
 
-        # Selección del punto objetivo activo según el tipo y el estado
         if tipo == 1:
-            # SEGMENTO
+            # SEGMENTO : primero el inicio y luego el final
             punto = self.objetivoActual.getInicio() if self.estado_inicio == True else self.objetivoActual.getFin()
         else:
-            # TRIANGULO
+            # TRIANGULO: primero el punto medio (para rodear el triángulo) y luego el final
             punto = self.objetivoActual.getMedio() if self.estado_inicio == True else self.objetivoActual.getFin()
 
-        #Calculamos la distancia a la que estamos del punto
+        #Aqui calculo la distancia y el agnulo
         difx, dify, distancia_objetivo, angulo_objetivo = self.distancia(punto[0], xrobot, punto[1], yrobot)
 
-        #Ahora lo que queremos es calcular la diferencia
-        # (Angulo objetivo le restamos nuestra orientacion, y asi obtenemos lo que debe girar nuestro robot)
+        # Calculamos cuánto tiene que girar el robot
+        # Angulo entre 180 y -180
         diferencia = self.calculo_diferencia(angulo_objetivo, orientacion)
 
-        # Obtenemos las velocidades lineal (x) y angular (y)
+        # Con eso, iraobjetivo nos da la velocidad lineal (x) y la angular (y)
         x, y = self.iraobjetivo(distancia_objetivo, diferencia)
-
         return x, y
-
-    #NOTAS
-
-        #Me doy cuenta dce que el angulo del robot lo imprimo en grados (orientarse (que es poseRobot[2])), por lo tanto
-        #para girar en sentido horario hay que usar el menos, por lo que el angulo bueno (el ue queremos en 360), hay que pillar el resto de dividir entre 360:
-        # ejemplo -- 0 grados mira hacia arriba, 180 abajo, 360 arriba otra vez, por lo que lo reseteamos a 0, pero tenemos que calcular como que el 0 esta igual de cerca del 270 que del 90, por lo que if orientacion
-
-    #DUDAS
-
-        # - siempre se alterna segmento, triangulo?
-        #   pueden haber dos trozos separados (el circuito es todo conectado o hay saltos?)
