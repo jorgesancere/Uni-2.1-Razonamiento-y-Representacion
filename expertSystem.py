@@ -44,13 +44,12 @@ class ExpertSystem:
         # Uso trigonometría basica: tan(angulo) = dify / difx, o sea: angulo = arctan(dify / difx).
         # Tengo que usar atan2 porque tiene en cuenta los signos de dify y difx y funciona hacia cualquier lado
         angulo = math.atan2(dify, difx) # Sale en radianes
+
         # Lo pasamos a grados porque la orientación del robot también está en grados
         angulo_objetivo = angulo * 180/math.pi
         return angulo_objetivo
 
     #   Saca de la pose del robot su posición (x, y) y su orientación en grados.
-    #   La pose trae 5 valores, pero solo necesitamos los 3 primeros.
-    #   Ojo: esta función no tiene que ver con estado_inicio, solo lee la pose
     def inicio(self, poseRobot):
         xrobot = poseRobot[0]
         yrobot = poseRobot[1]
@@ -62,9 +61,8 @@ class ExpertSystem:
         tipo = self.objetivoActual.getType()
         return tipo
 
-    #   Calcula cuánto tiene que girar el robot para mirar al punto (ángulo del objetivo menos orientación)
-    #   y deja el resultado siempre entre -180 y 180, para que gire por el lado más corto.
-    #   Si es positivo el punto está a la izquierda del robot y si es negativo, a la derecha
+    # Calcula cuánto tiene que girar el robot para mirar al punto (ángulo del objetivo menos orientación)
+    #  Si es positivo el punto está a la izquierda del robot y si es negativo, a la derecha
     def calculo_diferencia(self, angulo_objetivo, orientacion):
         diferencia  = angulo_objetivo - orientacion
         while diferencia > 180:
@@ -73,11 +71,7 @@ class ExpertSystem:
             diferencia += 360 # Si es menor de -180 le sumamos 360
         return diferencia
 
-    #   Recibe la posición de un punto y la del robot, y devuelve: la diferencia en X, la diferencia en Y,
-    #   la distancia al punto y el ángulo en el que está.
-    #   Ojo: la distancia es |difx| + |dify|, que no es la real (la real sería con hypot), pero es más
-    #   sencilla y solo la usamos para saber cuándo cambiar de punto y cuándo bajar la velocidad.
-    #   Vale para cualquier punto (inicio, punto medio o final)
+    # Recibe la posición de un punto y la del robot, y devuelve: la diferencia en X, la diferencia en Y
     def distancia(self, xiniobj, xrobot, yiniobj, yrobot):
         difx = xiniobj - xrobot
         dify = yiniobj - yrobot 
@@ -86,10 +80,7 @@ class ExpertSystem:
         return difx, dify, distancia_objetivo, angulo_objetivo
 
 
-    #   Es el bloque principal del sistema experto. Recibe la distancia al punto de destino y el error de ángulo
-    #   (diferencia), y devuelve x = velocidad lineal e y = velocidad angular.
-    #   Tiene 3 partes: 1) giro y velocidad según el error de ángulo, 2) arranque del primer objetivo
-    #   y 3) cambio de destino cuando estamos cerca del primer punto del tramo
+    #Recibe la distancia al punto de destino y el error de ángulo (diferencia), y devuelve x = velocidad lineal, y = velocidad angular.
     def iraobjetivo(self, distancia_objetivo, diferencia):
         # Giro a la DERECHA (diferencia positiva)
 
