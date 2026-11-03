@@ -21,7 +21,7 @@ class ExpertSystem:
         
         
         
-        #True: el robot va hacia el primer punto del tramo (el inicio de la racta o el punto medio del triángulo)
+        #True: el robot va hacia el primer punto del tramo (el inicio de la recta o el punto medio del triángulo)
         # False: el robot ya va hacia el punto final
         self.estado_inicio = True
 
@@ -31,13 +31,13 @@ class ExpertSystem:
         self.primer_objetivo_global = True 
 
     #Guarda en objetivoActual el objetivo al que tiene que moverse el robot.
-    #También pone estado_inicio a True, así en cada objetivo nuevo el robot va primero
+    #También pone estado_inicio a True, así en cada objetivo nuevo el robot va primero al inicio (o al punto medio) y después al final
     def setObjetivo(self, objetivo):
         self.objetivoActual = objetivo
         self.estado_inicio = True
 
     #   Recibe la diferencia en X y en Y entre el robot y un punto, y devuelve el ángulo
-    #   Paso el anguo a grados
+    #   Paso el ángulo a grados
     def funcionangulo(self, difx, dify):
 
 
@@ -71,7 +71,7 @@ class ExpertSystem:
             diferencia += 360 # Si es menor de -180 le sumamos 360
         return diferencia
 
-    # Recibe la posición de un punto y la del robot, y devuelve: la diferencia en X, la diferencia en Y
+    # Recibe la posición de un punto y la del robot, y devuelve: la diferencia en X, la diferencia en Y, la distancia al punto y el ángulo hacia él
     def distancia(self, xiniobj, xrobot, yiniobj, yrobot):
         difx = xiniobj - xrobot
         dify = yiniobj - yrobot 
@@ -81,65 +81,66 @@ class ExpertSystem:
 
 
     #Recibe la distancia al punto de destino y el error de ángulo (diferencia), y devuelve x = velocidad lineal, y = velocidad angular.
+    #Aquí están las reglas R2 a R9 (las reglas R1 y R10 están en tomarDecision)
     def iraobjetivo(self, distancia_objetivo, diferencia):
-        # Giro a la DERECHA (diferencia positiva)
+        # R6: Giro a la IZQUIERDA (diferencia positiva). Dentro, según el error: R2, R3 y R4
 
         if diferencia > 0.3:
-            if diferencia > 15:
+            if diferencia > 15: # R2: giro grande (más de 15°)
                 x = 2
                 y = 0.5
-            elif diferencia > 10:
+            elif diferencia > 10: # R3: giro medio (entre 10° y 15°)
                 x = 2.5
                 y = 0.3
-            else:
+            else: # R4: giro pequeño (entre 0.3° y 10°)
                 x = 3
                 y = 0.1
 
-        # Giro a la izquierda (diferencia negativa)
+        # R6: Giro a la DERECHA (diferencia negativa). Dentro, igual que arriba: R2, R3 y R4
         elif diferencia < -0.3:
-            if diferencia < -15:
+            if diferencia < -15: # R2: giro grande (más de 15°)
                 x = 2
                 y = -0.5
-            elif diferencia < -10:
+            elif diferencia < -10: # R3: giro medio (entre 10° y 15°)
                 x = 2.5
                 y = -0.3
-            else:
+            else: # R4: giro pequeño (entre 0.3° y 10°)
                 x = 3
                 y = -0.1
-        # Alineado con el objetivo (avanza recto)
+        # R5: Alineado con el objetivo (avanza recto)
         else:
             x = 3
             y = 0
 
-        # Para el primer punto, 
+        # R8 y R9: Arranque especial del primer objetivo (solo se usa al principio de todo)
         if self.primer_objetivo_global:
             if distancia_objetivo <= 3.5:
-                self.estado_inicio = False # Asignación explícita para evitar oscilaciones
+                self.estado_inicio = False # R8: Asignación explícita para evitar oscilaciones
 
             if self.estado_inicio:
-                # Antes de llegar al punto, le bajo la velocidad, y asievito problemas con inercia
+                # R8: Antes de llegar al punto, le bajo la velocidad, y así evito problemas con la inercia
                 if distancia_objetivo <= 5:
                     x = 1
             else:
-                # Hasta que no este alineado le limito la vel
+                # R9: Hasta que no este alineado le limito la vel
                 if abs(diferencia) > 10:
                     x = 1.0
                 else:
                     self.primer_objetivo_global = False 
 
-        #Compruebo estado según la distancia al objetivo inicial
+        #R7: Compruebo estado según la distancia al objetivo inicial
         if distancia_objetivo <= 2 and self.estado_inicio:
             self.estado_inicio = False
             x = 0.2
 
         return x, y
     
-    #Es la funcion que se repite constantemente, necesita los valores de x e y
+    #Es la función que se repite constantemente: recibe la pose del robot y devuelve x (velocidad lineal) e y (velocidad angular)
     def tomarDecision(self, poseRobot):
 
         x , y = 0 , 0 # Empezamos con velocidad 0 por si acaso
 
-        #Si todavía no hay objetivo, el robot se queda parado
+        #R10: Si todavía no hay objetivo, el robot se queda parado
         if self.objetivoActual is None:
             return x, y
 
@@ -150,13 +151,13 @@ class ExpertSystem:
         tipo = self.tipo_recorrido()
 
         if tipo == 1:
-            # SEGMENTO : primero el inicio y luego el final
+            # R1 - SEGMENTO : primero el inicio y luego el final
             punto = self.objetivoActual.getInicio() if self.estado_inicio == True else self.objetivoActual.getFin()
         else:
-            # TRIANGULO: primero el punto medio (para rodear el triángulo) y luego el final
+            # R1 - TRIANGULO: primero el punto medio (para rodear el triángulo) y luego el final
             punto = self.objetivoActual.getMedio() if self.estado_inicio == True else self.objetivoActual.getFin()
 
-        #Aqui calculo la distancia y el agnulo
+        #Aquí calculo la distancia y el ángulo
         difx, dify, distancia_objetivo, angulo_objetivo = self.distancia(punto[0], xrobot, punto[1], yrobot)
 
         # Calculamos cuánto tiene que girar el robot
