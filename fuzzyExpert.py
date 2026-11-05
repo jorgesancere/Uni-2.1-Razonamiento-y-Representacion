@@ -79,7 +79,7 @@ class FuzzySystem:
         }
 
         # 2. REGLAS DIFUSAS
-        # Son las mismas reglas que iraobjetivo (R2 a R6), pero cada una se aplica porcentualemnte según lo cerca que esté el error de cada conjunto
+        # Son las mismas reglas que iraobjetivo (G1 a G5), pero cada una se aplica "un poco" según lo cerca que esté el error de cada conjunto
         giros = [
             ("Izq_Grande", "Izq_Fuerte"),
             ("Izq_Media", "Izq_Media"),
@@ -114,7 +114,7 @@ class FuzzySystem:
             )
             for error, vel in velocidades
         ]
-        # Regla del arranque (R8 y R9): en el arranque del primer objetivo se va a 1 m/s
+        # Regla del arranque (A1 y A2): en el arranque del primer objetivo se va a 1 m/s
         self.reglas.append(
             FuzzyRule(
                 premise=[("arranque", "Si")],

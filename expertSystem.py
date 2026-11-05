@@ -81,54 +81,54 @@ class ExpertSystem:
 
 
     #Recibe la distancia al punto de destino y el error de ángulo (diferencia), y devuelve x = velocidad lineal, y = velocidad angular.
-    #Aquí están las reglas R2 a R9 (las reglas R1 y R10 están en tomarDecision)
+    #Aquí están las reglas G1 a G5, A1, A2 y C1 (las reglas T1 y T2 están en tomarDecision)
     def iraobjetivo(self, distancia_objetivo, diferencia):
-        # R6: Giro a la IZQUIERDA (diferencia positiva). Dentro, según el error: R2, R3 y R4
+        # G5: Giro a la IZQUIERDA (diferencia positiva). Dentro, según el error: G1, G2 y G3
 
         if diferencia > 0.3:
-            if diferencia > 15: # R2: giro grande (más de 15°)
+            if diferencia > 15: # G1: giro grande (más de 15°)
                 x = 2
                 y = 0.5
-            elif diferencia > 10: # R3: giro medio (entre 10° y 15°)
+            elif diferencia > 10: # G2: giro medio (entre 10° y 15°)
                 x = 2.5
                 y = 0.3
-            else: # R4: giro pequeño (entre 0.3° y 10°)
+            else: # G3: giro pequeño (entre 0.3° y 10°)
                 x = 3
                 y = 0.1
 
-        # R6: Giro a la DERECHA (diferencia negativa). Dentro, igual que arriba: R2, R3 y R4
+        # G5: Giro a la DERECHA (diferencia negativa). Dentro, igual que arriba: G1, G2 y G3
         elif diferencia < -0.3:
-            if diferencia < -15: # R2: giro grande (más de 15°)
+            if diferencia < -15: # G1: giro grande (más de 15°)
                 x = 2
                 y = -0.5
-            elif diferencia < -10: # R3: giro medio (entre 10° y 15°)
+            elif diferencia < -10: # G2: giro medio (entre 10° y 15°)
                 x = 2.5
                 y = -0.3
-            else: # R4: giro pequeño (entre 0.3° y 10°)
+            else: # G3: giro pequeño (entre 0.3° y 10°)
                 x = 3
                 y = -0.1
-        # R5: Alineado con el objetivo (avanza recto)
+        # G4: Alineado con el objetivo (avanza recto)
         else:
             x = 3
             y = 0
 
-        # R8 y R9: Arranque especial del primer objetivo (solo se usa al principio de todo)
+        # A1 y A2: Arranque especial del primer objetivo (solo se usa al principio de todo)
         if self.primer_objetivo_global:
             if distancia_objetivo <= 3.5:
-                self.estado_inicio = False # R8: Asignación explícita para evitar oscilaciones
+                self.estado_inicio = False # A1: Asignación explícita para evitar oscilaciones
 
             if self.estado_inicio:
-                # R8: Antes de llegar al punto, le bajo la velocidad, y así evito problemas con la inercia
+                # A1: Antes de llegar al punto, le bajo la velocidad, y así evito problemas con la inercia
                 if distancia_objetivo <= 5:
                     x = 1
             else:
-                # R9: Hasta que no este alineado le limito la vel
+                # A2: Hasta que no este alineado le limito la vel
                 if abs(diferencia) > 10:
                     x = 1.0
                 else:
                     self.primer_objetivo_global = False 
 
-        #R7: Compruebo estado según la distancia al objetivo inicial
+        #C1: Compruebo estado según la distancia al objetivo inicial
         if distancia_objetivo <= 2 and self.estado_inicio:
             self.estado_inicio = False
             x = 0.2
@@ -140,7 +140,7 @@ class ExpertSystem:
 
         x , y = 0 , 0 # Empezamos con velocidad 0 por si acaso
 
-        #R10: Si todavía no hay objetivo, el robot se queda parado
+        #T1: Si todavía no hay objetivo, el robot se queda parado
         if self.objetivoActual is None:
             return x, y
 
@@ -151,10 +151,10 @@ class ExpertSystem:
         tipo = self.tipo_recorrido()
 
         if tipo == 1:
-            # R1 - SEGMENTO : primero el inicio y luego el final
+            # T2 - SEGMENTO : primero el inicio y luego el final
             punto = self.objetivoActual.getInicio() if self.estado_inicio == True else self.objetivoActual.getFin()
         else:
-            # R1 - TRIANGULO: primero el punto medio (para rodear el triángulo) y luego el final
+            # T2 - TRIANGULO: primero el punto medio (para rodear el triángulo) y luego el final
             punto = self.objetivoActual.getMedio() if self.estado_inicio == True else self.objetivoActual.getFin()
 
         #Aquí calculo la distancia y el ángulo
@@ -164,6 +164,6 @@ class ExpertSystem:
         # Angulo entre 180 y -180
         diferencia = self.calculo_diferencia(angulo_objetivo, orientacion)
 
-        # Con eso, iraobjetivo nos da la velocidad lineal (x) y la angular (y)
+        # iraobjetivo nos da la velocidad lineal (x) y la angular (y)
         x, y = self.iraobjetivo(distancia_objetivo, diferencia)
         return x, y
