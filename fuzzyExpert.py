@@ -33,6 +33,7 @@ class FuzzySystem:
         #   alineado (menos de 0.5°), pequeño (hasta 10°), medio (de 12° a 14°) y grande (a partir de 16°)
         # Entre un rango y otro el cambio es gradual, no de golpe como en el sistema experto.
         # Positivo = el punto está a la izquierda del robot, negativo = a la derecha
+        
         self.variables = {
             "error_angulo": FuzzyVariable(
                 universe_range=(-180, 180),
@@ -123,7 +124,6 @@ class FuzzySystem:
         )
 
         # 3. MOTOR DE INFERENCIA
-        # ("Rc" en esta librería es la implicación del mínimo, la de Mamdani)
         self.modelo = DecompositionalInference(
             and_operator="min",
             or_operator="max",
@@ -183,7 +183,7 @@ class FuzzySystem:
         if distancia <= 2 and self.estado_inicio:
             self.estado_inicio = False
 
-        # Uso del modelo difuso para obtener V y W
+        # Uso el modelo difuso para obtener V y W
         resultado, _ = self.modelo(
             variables=self.variables,
             rules=self.reglas,
