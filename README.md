@@ -2,80 +2,41 @@
 
 Práctica 1: Sistemas Expertos
 
-Jorge Sánchez Cerezo - Universidad de Alicante - Curso 2026/2027
+Jorge Sánchez Cerezo, Universidad de Alicante
 
----
+## Introducción
 
-## De qué va
+En esta práctica hay que controlar un robot móvil que se mueve por un plano sin obstáculos. Lo único que sabemos del robot es su posición y hacia dónde mira, y lo único que podemos hacer es darle una velocidad lineal y una velocidad angular. Con eso, el robot tiene que recorrer un circuito lo más pegado posible al camino y tardando lo menos posible. Cuanto mejor lo haga, más puntuación le da el simulador.
 
-En esta práctica se pretende elaborar métodos para el control de un robot móvil utilizando un
-sistema experto. Se va a considerar un robot móvil que puede desplazarse por un plano horizontal
-mediante comandos de velocidad lineal y velocidad angular. El objetivo del robot será recorrer lo
-más cercanamente posible un camino a través de su entorno. El entorno está libre de obstáculos y no
-se tendrán en cuenta los posibles sensores del robot. Conoceremos únicamente su pose, es decir, la
-posición (x, y) del robot en el plano y la orientación del robot.
-Se proporcionará un proyecto que realizará la simulación del movimiento del robot y la visualizará.
-Según el robot vaya alcanzando los objetivos que vaya recibiendo irá obteniendo una puntuación de
-recompensa de acuerdo a lo bien que se ajuste su trayectoria a los objetivos y el tiempo que emplee
-en alcanzarlos.
+El circuito está formado por tramos de dos tipos: segmentos rectos y triángulos, que el robot tiene que rodear sin entrar dentro.
 
-La práctica tiene dos ejercicios que resuelven el mismo problema de dos formas:
+La práctica tiene dos ejercicios que resuelven el mismo problema de dos formas distintas:
 
-- **Ejercicio 1:** sistema experto clásico, con reglas if-then (`expertSystem.py`).
-- **Ejercicio 2:** sistema experto difuso, con la librería fuzzy-expert (`fuzzyExpert.py`). Parte de la lógica del ejercicio 1.
+- **Ejercicio 1:** un sistema experto clásico, con reglas if-then.
+- **Ejercicio 2:** un sistema experto difuso, con reglas difusas. Lo hice a partir del ejercicio 1, pasando sus reglas y sus valores al sistema difuso.
 
-## Archivos
+## Cómo se ejecuta
 
-Los que he escrito yo:
-
-| Archivo | Qué es |
-|---|---|
-| `expertSystem.py` | Ejercicio 1: sistema experto clásico |
-| `fuzzyExpert.py` | Ejercicio 2: sistema experto difuso |
-
-Los que vienen dados por el profesor:
-
-| Archivo | Qué es |
-|---|---|
-| `P1Launcher.py` | Lanza la simulación y la ventana gráfica |
-| `robot.py` | El robot y su dinámica |
-| `objetivo.py` | Los objetivos que tiene que recorrer el robot |
-| `recorrido*.json` | Los circuitos de prueba |
-| `calculaPropina.py` | Ejemplo de sistema difuso |
-| `EnunciadoP1.pdf` | Enunciado de la práctica |
-
-## Cómo ejecutarlo
-
-Hace falta Python y estas dos librerías:
+Primero hay que instalar las librerías que se usan:
 
 ```
 pip install pygame fuzzy-expert
 ```
 
-Para lanzar la simulación:
+Después se lanza el simulador con:
 
 ```
 python P1Launcher.py
 ```
 
-Por defecto se usa el sistema experto. Para probar el difuso hay que cambiar esta variable al principio de `P1Launcher.py`:
+Por defecto usa el ejercicio 1. Para probar el ejercicio 2, hay que cambiar esta variable en `P1Launcher.py`:
 
 ```python
 useFuzzySystem = True
 ```
 
-Al terminar cada objetivo, el simulador imprime por la terminal la puntuación de ese tramo, y al final la puntuación total.
-
-## Cómo funciona
-
-Los dos ejercicios siguen la misma idea:
-
-1. El robot va primero al primer punto del tramo (el inicio de la recta, o el punto medio del triángulo para rodearlo).
-2. Cuando está cerca, cambia el destino al punto final.
-3. En cada instante calcula cuánto tiene que girar para mirar al punto, y de ahí saca la velocidad lineal y la angular.
-
-En el ejercicio 1 las reglas cambian de golpe según el error de ángulo. En el ejercicio 2 las mismas reglas cambian de forma gradual.
+Cuando el robot termina cada objetivo, el simulador escribe en la terminal la nota de ese tramo, y al final escribe la nota total.
 
 ## Documentación
 
-La explicación completa (evolución del trabajo, código, reglas, resultados y conclusiones) está en el PDF de la documentación de la práctica.
+Todo el trabajo está explicado en la memoria de la práctica (el PDF): cómo fue evolucionando cada ejercicio, qué hace el código, las reglas que he usado, los resultados y las conclusiones.
