@@ -29,7 +29,7 @@ Después se lanza el simulador con:
 python P1Launcher.py
 ```
 
-Por defecto usa el ejercicio 1. Para probar el ejercicio 2, hay que cambiar esta variable en `P1Launcher.py`:
+Por defecto usa el ejercicio 2. Para probar el ejercicio 1, hay que cambiar esta variable en `P1Launcher.py`:
 
 ```python
 useFuzzySystem = True
