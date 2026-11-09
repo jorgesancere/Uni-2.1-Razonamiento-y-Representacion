@@ -15,28 +15,6 @@ La práctica tiene dos ejercicios que resuelven el mismo problema de dos formas 
 - **Ejercicio 1:** un sistema experto clásico, con reglas if-then.
 - **Ejercicio 2:** un sistema experto difuso, con reglas difusas. Lo hice a partir del ejercicio 1, pasando sus reglas y sus valores al sistema difuso.
 
-## Cómo se ejecuta
-
-Primero hay que instalar las librerías que se usan:
-
-```
-pip install pygame fuzzy-expert
-```
-
-Después se lanza el simulador con:
-
-```
-python P1Launcher.py
-```
-
-Por defecto usa el ejercicio 2. Para probar el ejercicio 1, hay que cambiar esta variable en `P1Launcher.py`:
-
-```python
-useFuzzySystem = True
-```
-
-Cuando el robot termina cada objetivo, el simulador escribe en la terminal la nota de ese tramo, y al final escribe la nota total.
-
 ## Documentación
 
 Todo el trabajo está explicado en la memoria de la práctica (el PDF): cómo fue evolucionando cada ejercicio, qué hace el código, las reglas que he usado, los resultados y las conclusiones.
